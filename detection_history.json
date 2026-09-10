@@ -1,0 +1,43 @@
+[
+  {
+    "id": 1,
+    "timestamp": "2026-09-09T21:34:42.327212",
+    "mode": "text",
+    "standard_answer": "Python是一种高级编程语言，由Guido van Rossum于1989年发明。",
+    "results": [
+      {
+        "exact_match": 0.9286,
+        "sequence_similarity": 0.9286,
+        "keyword_overlap": 0.8,
+        "weighted_score": 0.8964,
+        "level": "high",
+        "index": 0,
+        "student_name": "张三",
+        "student_answer": "Python是一种高级编程语言，由Guido van Rossum在1989年创造。",
+        "photos": []
+      },
+      {
+        "exact_match": 0.1429,
+        "sequence_similarity": 0.2143,
+        "keyword_overlap": 0.0,
+        "weighted_score": 0.1321,
+        "level": "safe",
+        "index": 1,
+        "student_name": "李四",
+        "student_answer": "Java是面向对象编程语言。",
+        "photos": []
+      }
+    ],
+    "statistics": {
+      "count": 2,
+      "avg_score": 0.5142,
+      "max_score": 0.8964,
+      "min_score": 0.1321,
+      "high_count": 1,
+      "medium_count": 0,
+      "low_count": 0,
+      "safe_count": 1,
+      "plagiarism_rate": 0.5
+    }
+  }
+]

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#6366f1">
+    <title>AntiCopy - 作业抄袭检测系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+        <div class="bg-circle bg-circle-1"></div>
+        <div class="bg-circle bg-circle-2"></div>
+        <div class="bg-circle bg-circle-3"></div>
+    </div>
+
+    <!-- 顶部导航 -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="nav-icon">🛡️</span>
+            <span class="nav-title">AntiCopy</span>
+            <span class="nav-badge">v2.0</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="nav-link active" data-tab="detect">检测</a>
+            <a href="#" class="nav-link" data-tab="history">历史</a>
+            <a href="#" class="nav-link" data-tab="settings">设置</a>
+        </div>
+    </nav>
+
+    <!-- 移动端底部 Tab Bar -->
+    <nav class="tab-bar">
+        <a href="#" class="tab-bar-item active" data-tab="detect">
+            <span class="tab-bar-icon">🔍</span>
+            <span class="tab-bar-label">检测</span>
+        </a>
+        <a href="#" class="tab-bar-item" data-tab="history">
+            <span class="tab-bar-icon">📋</span>
+            <span class="tab-bar-label">历史</span>
+        </a>
+        <a href="#" class="tab-bar-item" data-tab="settings">
+            <span class="tab-bar-icon">⚙️</span>
+            <span class="tab-bar-label">设置</span>
+        </a>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 检测面板 -->
+        <section id="tab-detect" class="tab-panel active">
+            <!-- 模式选择 -->
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="text">
+                    <span class="mode-icon">📝</span>
+                    <span class="mode-label">文本检测</span>
+                </button>
+                <button class="mode-btn" data-mode="image">
+                    <span class="mode-icon">🖼️</span>
+                    <span class="mode-label">图片检测</span>
+                </button>
+                <button class="mode-btn" data-mode="api">
+                    <span class="mode-icon">🔍</span>
+                    <span class="mode-label">API 搜题</span>
+                </button>
+            </div>
+
+            <!-- 文本检测表单 -->
+            <div id="form-text" class="detect-form active">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h2>文本模式检测</h2>
+                        <p>输入标准答案和学生答案，进行相似度分析</p>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">📖</span>
+                                标准答案
+                            </label>
+                            <textarea id="standard-answer" class="form-textarea" rows="4" placeholder="请输入标准答案..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">👨‍🎓</span>
+                                学生答案
+                                <span class="label-hint">支持批量添加</span>
+                            </label>
+                            <div class="student-actions-row">
+                                <button class="btn btn-outline btn-sm" id="btn-batch-import" title="从文本批量导入">
+                                    <span class="btn-icon">📋</span> 批量输入
+                                </button>
+                                <label class="btn btn-outline btn-sm btn-upload-label" title="上传答案文件">
+                                    <span class="btn-icon">📁</span> 上传文件
+                                    <input type="file" id="file-upload-students" class="btn-upload-input" accept=".txt,text/plain">
+                                </label>
+                            </div>
+                            <div class="student-count-row">
+                                <label class="count-label">检测份数</label>
+                                <div class="count-input-group">
+                                    <button class="count-btn" id="decrease-count">−</button>
+                                    <input type="number" id="student-count" class="count-input" value="3" min="1" max="50">
+                                    <button class="count-btn" id="increase-count">+</button>
+                                </div>
+                                <button class="btn btn-primary btn-sm" id="generate-cards">生成卡片</button>
+                            </div>
+                            <div id="student-cards" class="student-cards">
+                                <!-- 动态生成学生卡片 -->
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-text">
+                            <span class="btn-icon">🚀</span>
+                            开始检测
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图片检测表单 -->
+            <div id="form-image" class="detect-form">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h2>图片模式检测</h2>
+                        <p>上传题目图片，自动识别并与学生答案比对</p>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">📷</span>
+                                题目图片
+                            </label>
+                            <div class="upload-zone" id="upload-zone">
+                                <input type="file" id="image-upload" class="upload-input" accept="image/*">
+                                <div class="upload-content">
+                                    <span class="upload-icon">📁</span>
+                                    <p class="upload-text">点击或拖拽图片到此处</p>
+                                    <p class="upload-hint">支持 JPG、PNG、BMP 格式</p>
+                                </div>
+                                <div class="upload-preview" id="upload-preview" style="display:none;">
+                                    <img id="preview-img" src="" alt="预览">
+                                    <button class="upload-remove" id="remove-image">×</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">👨‍🎓</span>
+                                学生答案
+                            </label>
+                            <div class="student-count-row">
+                                <label class="count-label">检测份数</label>
+                                <div class="count-input-group">
+                                    <button class="count-btn" id="decrease-count-img">−</button>
+                                    <input type="number" id="student-count-img" class="count-input" value="3" min="1" max="50">
+                                    <button class="count-btn" id="increase-count-img">+</button>
+                                </div>
+                                <button class="btn btn-primary btn-sm" id="generate-cards-img">生成卡片</button>
+                            </div>
+                            <div id="student-cards-img" class="student-cards"></div>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-image">
+                            <span class="btn-icon">🚀</span>
+                            开始检测
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API 搜题表单 -->
+            <div id="form-api" class="detect-form">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h2>API 搜题检测</h2>
+                        <p>输入题目，系统自动从搜题平台获取标准答案</p>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">❓</span>
+                                题目内容
+                            </label>
+                            <textarea id="question-input" class="form-textarea" rows="3" placeholder="请输入题目内容..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">👨‍🎓</span>
+                                学生答案
+                            </label>
+                            <div class="student-count-row">
+                                <label class="count-label">检测份数</label>
+                                <div class="count-input-group">
+                                    <button class="count-btn" id="decrease-count-api">−</button>
+                                    <input type="number" id="student-count-api" class="count-input" value="3" min="1" max="50">
+                                    <button class="count-btn" id="increase-count-api">+</button>
+                                </div>
+                                <button class="btn btn-primary btn-sm" id="generate-cards-api">生成卡片</button>
+                            </div>
+                            <div id="student-cards-api" class="student-cards"></div>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-api">
+                            <span class="btn-icon">🔍</span>
+                            搜题并检测
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 结果面板 -->
+        <section id="result-panel" class="result-panel" style="display:none;">
+            <!-- 统计卡片 -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card stat-total">
+                    <div class="stat-value" id="stat-count">0</div>
+                    <div class="stat-label">检测份数</div>
+                </div>
+                <div class="stat-card stat-avg">
+                    <div class="stat-value" id="stat-avg">0%</div>
+                    <div class="stat-label">平均相似度</div>
+                </div>
+                <div class="stat-card stat-high">
+                    <div class="stat-value" id="stat-high">0</div>
+                    <div class="stat-label">高风险</div>
+                </div>
+                <div class="stat-card stat-rate">
+                    <div class="stat-value" id="stat-rate">0%</div>
+                    <div class="stat-label">抄袭率</div>
+                </div>
+            </div>
+
+            <!-- 标准答案展示 -->
+            <div class="standard-answer-card" id="standard-answer-display" style="display:none;">
+                <div class="card-header">
+                    <span class="card-icon">📖</span>
+                    <span>标准答案</span>
+                    <span class="api-source" id="api-source"></span>
+                </div>
+                <div class="card-body" id="standard-answer-text"></div>
+            </div>
+
+            <!-- 结果列表 -->
+            <div class="result-list" id="result-list">
+                <!-- 动态生成结果项 -->
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="result-actions">
+                <button class="btn btn-outline" id="btn-export">
+                    <span class="btn-icon">📥</span>
+                    导出报告
+                </button>
+                <button class="btn btn-outline" id="btn-reset">
+                    <span class="btn-icon">🔄</span>
+                    重新检测
+                </button>
+            </div>
+        </section>
+
+        <!-- 历史面板 -->
+        <section id="tab-history" class="tab-panel">
+            <div id="history-content">
+                <div class="empty-state">
+                    <span class="empty-icon">📋</span>
+                    <h3>加载中...</h3>
+                </div>
+            </div>
+        </section>
+
+        <!-- 设置面板 -->
+        <section id="tab-settings" class="tab-panel">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2>检测参数设置</h2>
+                    <p>自定义相似度计算的权重和阈值</p>
+                </div>
+                <div class="form-body">
+                    <div class="settings-group">
+                        <h3 class="settings-title">权重配置</h3>
+                        <div class="setting-item">
+                            <label>精确匹配权重</label>
+                            <input type="range" class="range-input" id="weight-exact" min="0" max="100" value="40">
+                            <span class="range-value" id="weight-exact-val">0.40</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>序列相似度权重</label>
+                            <input type="range" class="range-input" id="weight-sequence" min="0" max="100" value="35">
+                            <span class="range-value" id="weight-sequence-val">0.35</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>关键词重叠权重</label>
+                            <input type="range" class="range-input" id="weight-keyword" min="0" max="100" value="25">
+                            <span class="range-value" id="weight-keyword-val">0.25</span>
+                        </div>
+                        <div class="setting-note">提示：三项权重之和建议为 1.00</div>
+                    </div>
+                    <div class="settings-group">
+                        <h3 class="settings-title">阈值配置</h3>
+                        <div class="setting-item">
+                            <label>高风险阈值</label>
+                            <input type="range" class="range-input" id="threshold-high" min="50" max="100" value="80">
+                            <span class="range-value" id="threshold-high-val">80%</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>中风险阈值</label>
+                            <input type="range" class="range-input" id="threshold-medium" min="30" max="80" value="50">
+                            <span class="range-value" id="threshold-medium-val">50%</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-block" id="btn-save-settings">
+                        <span class="btn-icon">💾</span> 保存设置
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay" id="loading-overlay" style="display:none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p class="loading-text">正在分析中...</p>
+        </div>
+    </div>
+
+    <!-- 批量导入弹窗 -->
+    <div class="modal-overlay" id="batch-modal" style="display:none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>批量导入学生答案</h3>
+                <button class="modal-close" id="batch-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint">每行一份答案，格式：<code>姓名,答案内容</code>（没有姓名则自动编号）</p>
+                <textarea id="batch-text" class="form-textarea" rows="8" placeholder="张三,Python是一种高级编程语言...
+李四,Java是由Sun开发的...
+王五,C语言是Dennis发明的...
+直接写答案也可以，每行一份"></textarea>
+                <div class="modal-upload-zone" id="modal-upload-zone">
+                    <input type="file" id="modal-file-upload" class="upload-input" accept=".txt,text/plain">
+                    <span class="upload-icon">📁</span>
+                    <p class="upload-text">或点击上传 .txt 文件</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="batch-cancel">取消</button>
+                <button class="btn btn-primary" id="batch-confirm">导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
