@@ -7,9 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#6366f1">
     <title>AntiCopy - 作业抄袭检测系统</title>
+    <!-- 字体只用本机已有字体，不引远程 CDN：打包成 exe 离线运行时 CDN 必然失败 -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- 背景装饰 -->
@@ -24,7 +23,7 @@
         <div class="nav-brand">
             <span class="nav-icon">🛡️</span>
             <span class="nav-title">AntiCopy</span>
-            <span class="nav-badge">v2.0</span>
+            <span class="nav-badge">v3.0</span>
         </div>
         <div class="nav-links">
             <a href="#" class="nav-link active" data-tab="detect">检测</a>
@@ -59,13 +58,17 @@
                     <span class="mode-icon">📝</span>
                     <span class="mode-label">文本检测</span>
                 </button>
-                <button class="mode-btn" data-mode="image">
-                    <span class="mode-icon">🖼️</span>
-                    <span class="mode-label">图片检测</span>
+                <button class="mode-btn" data-mode="pairwise">
+                    <span class="mode-icon">👥</span>
+                    <span class="mode-label">学生互查</span>
                 </button>
-                <button class="mode-btn" data-mode="api">
-                    <span class="mode-icon">🔍</span>
-                    <span class="mode-label">API 搜题</span>
+                <button class="mode-btn" data-mode="paper">
+                    <span class="mode-icon">📚</span>
+                    <span class="mode-label">整卷多题</span>
+                </button>
+                <button class="mode-btn" data-mode="aigc">
+                    <span class="mode-icon">🤖</span>
+                    <span class="mode-label">AIGC 线索</span>
                 </button>
             </div>
 
@@ -83,6 +86,30 @@
                                 标准答案
                             </label>
                             <textarea id="standard-answer" class="form-textarea" rows="4" placeholder="请输入标准答案..."></textarea>
+
+                            <details class="answer-helper" id="answer-helper">
+                                <summary>没有标准答案？用大模型生成一份参考答案</summary>
+                                <div class="helper-body">
+                                    <p class="helper-hint">
+                                        需要先在 设置 → 大模型接口 配好地址与密钥。
+                                        生成结果可能有错，请老师先核对再用来比对。
+                                    </p>
+                                    <textarea id="helper-question" class="form-textarea" rows="3" placeholder="把题目粘贴到这里..."></textarea>
+                                    <div class="helper-row">
+                                        <input type="text" id="helper-subject" class="form-input" placeholder="学科（可空）">
+                                        <input type="text" id="helper-grade" class="form-input" placeholder="学段（可空）">
+                                        <select class="preset-select" id="helper-style">
+                                            <option value="short">简短答案</option>
+                                            <option value="standard" selected>标准解答</option>
+                                            <option value="essay">长题 / 作文要点</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-outline btn-sm" id="btn-generate-answer">
+                                        <span class="btn-icon">✨</span> 生成参考答案
+                                    </button>
+                                    <div class="helper-result" id="helper-result" style="display:none;"></div>
+                                </div>
+                            </details>
                         </div>
 
                         <div class="form-group">
@@ -103,9 +130,9 @@
                             <div class="student-count-row">
                                 <label class="count-label">检测份数</label>
                                 <div class="count-input-group">
-                                    <button class="count-btn" id="decrease-count">−</button>
+                                    <button class="count-btn" id="decrease-count" aria-label="减少份数">−</button>
                                     <input type="number" id="student-count" class="count-input" value="3" min="1" max="50">
-                                    <button class="count-btn" id="increase-count">+</button>
+                                    <button class="count-btn" id="increase-count" aria-label="增加份数">+</button>
                                 </div>
                                 <button class="btn btn-primary btn-sm" id="generate-cards">生成卡片</button>
                             </div>
@@ -122,94 +149,139 @@
                 </div>
             </div>
 
-            <!-- 图片检测表单 -->
-            <div id="form-image" class="detect-form">
+            <!-- 学生互查表单 -->
+            <div id="form-pairwise" class="detect-form">
                 <div class="form-card">
                     <div class="form-header">
-                        <h2>图片模式检测</h2>
-                        <p>上传题目图片，自动识别并与学生答案比对</p>
+                        <h2>学生互查（两两比对）</h2>
+                        <p>不需要标准答案，直接比出「谁和谁像」，并自动聚类出疑似抄袭团伙</p>
                     </div>
                     <div class="form-body">
                         <div class="form-group">
                             <label class="form-label">
-                                <span class="label-icon">📷</span>
-                                题目图片
-                            </label>
-                            <div class="upload-zone" id="upload-zone">
-                                <input type="file" id="image-upload" class="upload-input" accept="image/*">
-                                <div class="upload-content">
-                                    <span class="upload-icon">📁</span>
-                                    <p class="upload-text">点击或拖拽图片到此处</p>
-                                    <p class="upload-hint">支持 JPG、PNG、BMP 格式</p>
-                                </div>
-                                <div class="upload-preview" id="upload-preview" style="display:none;">
-                                    <img id="preview-img" src="" alt="预览">
-                                    <button class="upload-remove" id="remove-image">×</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <span class="label-icon">👨‍🎓</span>
-                                学生答案
+                                <span class="label-icon">👥</span>
+                                参与互查的学生
+                                <span class="label-hint">建议 3 份以上，少于 2 份无法比对</span>
                             </label>
                             <div class="student-count-row">
-                                <label class="count-label">检测份数</label>
+                                <label class="count-label">学生人数</label>
                                 <div class="count-input-group">
-                                    <button class="count-btn" id="decrease-count-img">−</button>
-                                    <input type="number" id="student-count-img" class="count-input" value="3" min="1" max="50">
-                                    <button class="count-btn" id="increase-count-img">+</button>
+                                    <button class="count-btn" id="decrease-count-pair" aria-label="减少人数">−</button>
+                                    <input type="number" id="student-count-pair" class="count-input" value="3" min="2" max="50">
+                                    <button class="count-btn" id="increase-count-pair" aria-label="增加人数">+</button>
                                 </div>
-                                <button class="btn btn-primary btn-sm" id="generate-cards-img">生成卡片</button>
+                                <button class="btn btn-primary btn-sm" id="generate-cards-pair">生成卡片</button>
                             </div>
-                            <div id="student-cards-img" class="student-cards"></div>
+                            <div id="student-cards-pair" class="student-cards"></div>
                         </div>
 
-                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-image">
-                            <span class="btn-icon">🚀</span>
-                            开始检测
+                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-pairwise">
+                            <span class="btn-icon">🔎</span>
+                            开始互查
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- API 搜题表单 -->
-            <div id="form-api" class="detect-form">
+            <!-- 整卷多题表单 -->
+            <div id="form-paper" class="detect-form">
                 <div class="form-card">
                     <div class="form-header">
-                        <h2>API 搜题检测</h2>
-                        <p>输入题目，系统自动从搜题平台获取标准答案</p>
+                        <h2>整卷多题检测</h2>
+                        <p>逐题比对后按分值汇总成整卷抄袭指数；本模式为文字录入，暂不支持逐题拍照</p>
                     </div>
                     <div class="form-body">
                         <div class="form-group">
                             <label class="form-label">
-                                <span class="label-icon">❓</span>
-                                题目内容
+                                <span class="label-icon">📚</span>
+                                试卷名称
                             </label>
-                            <textarea id="question-input" class="form-textarea" rows="3" placeholder="请输入题目内容..."></textarea>
+                            <input type="text" id="paper-name" class="form-input" placeholder="例如：第 3 单元测验">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="paper-section-head">
+                                <label class="form-label">
+                                    <span class="label-icon">❓</span>
+                                    题目与标准答案
+                                </label>
+                                <button class="btn btn-outline btn-sm" id="btn-add-question">
+                                    <span class="btn-icon">＋</span> 添加题目
+                                </button>
+                            </div>
+                            <div id="paper-questions" class="paper-questions"></div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">
                                 <span class="label-icon">👨‍🎓</span>
-                                学生答案
+                                学生答卷
                             </label>
                             <div class="student-count-row">
-                                <label class="count-label">检测份数</label>
+                                <label class="count-label">学生人数</label>
                                 <div class="count-input-group">
-                                    <button class="count-btn" id="decrease-count-api">−</button>
-                                    <input type="number" id="student-count-api" class="count-input" value="3" min="1" max="50">
-                                    <button class="count-btn" id="increase-count-api">+</button>
+                                    <button class="count-btn" id="decrease-count-paper" aria-label="减少人数">−</button>
+                                    <input type="number" id="student-count-paper" class="count-input" value="2" min="1" max="50">
+                                    <button class="count-btn" id="increase-count-paper" aria-label="增加人数">+</button>
                                 </div>
-                                <button class="btn btn-primary btn-sm" id="generate-cards-api">生成卡片</button>
+                                <button class="btn btn-primary btn-sm" id="generate-cards-paper">生成卡片</button>
                             </div>
-                            <div id="student-cards-api" class="student-cards"></div>
+                            <div id="student-cards-paper" class="student-cards"></div>
                         </div>
 
-                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-api">
+                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-paper">
+                            <span class="btn-icon">🚀</span>
+                            开始整卷检测
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AIGC 风格线索表单 -->
+            <div id="form-aigc" class="detect-form">
+                <div class="form-card">
+                    <div class="form-header">
+                        <h2>作文 AI 风格线索</h2>
+                        <p>看句长、套话、抽象词、具体信息这些写得出来的痕迹，并圈出最可疑的句子</p>
+                    </div>
+                    <div class="form-body">
+                        <div class="notice notice-warning">
+                            这个功能<b>不能</b>判定作文是不是 AI 写的。中学作文本来就教「总分总、首先其次综上所述」，
+                            任何自动检测都会误伤认真套模板的学生。结果只用于决定<b>先找谁聊一聊</b>，
+                            不能作为定性依据。
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">✍️</span>
+                                标注（可选，仅用于显示）
+                            </label>
+                            <input type="text" id="aigc-name" class="form-input" placeholder="例如：张三 / 第 2 周周记">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <span class="label-icon">📄</span>
+                                作文正文
+                                <span class="label-hint">至少 60 字，太短的片段不出线索</span>
+                            </label>
+                            <textarea id="aigc-text" class="form-textarea" rows="12" placeholder="把作文粘贴到这里…"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="setting-item setting-item-inline">
+                                <label for="aigc-external">调用大模型做二次判别</label>
+                                <input type="checkbox" id="aigc-external" class="checkbox-input">
+                            </div>
+                            <p class="field-hint">
+                                勾选后只把最可疑的若干句（不含姓名、不含全文）发给接口，会计入当日预算；
+                                不勾选则完全在本机计算，不产生任何费用。
+                            </p>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg btn-block" id="btn-detect-aigc">
                             <span class="btn-icon">🔍</span>
-                            搜题并检测
+                            查看风格线索
                         </button>
                     </div>
                 </div>
@@ -218,46 +290,85 @@
 
         <!-- 结果面板 -->
         <section id="result-panel" class="result-panel" style="display:none;">
-            <!-- 统计卡片 -->
-            <div class="stats-grid" id="stats-grid">
-                <div class="stat-card stat-total">
-                    <div class="stat-value" id="stat-count">0</div>
-                    <div class="stat-label">检测份数</div>
-                </div>
-                <div class="stat-card stat-avg">
-                    <div class="stat-value" id="stat-avg">0%</div>
-                    <div class="stat-label">平均相似度</div>
-                </div>
-                <div class="stat-card stat-high">
-                    <div class="stat-value" id="stat-high">0</div>
-                    <div class="stat-label">高风险</div>
-                </div>
-                <div class="stat-card stat-rate">
-                    <div class="stat-value" id="stat-rate">0%</div>
-                    <div class="stat-label">抄袭率</div>
-                </div>
-            </div>
+            <!-- 统计卡片（按模式动态渲染） -->
+            <div class="stats-grid" id="stats-grid"></div>
 
-            <!-- 标准答案展示 -->
+            <!-- 标准答案展示（文本模式） -->
             <div class="standard-answer-card" id="standard-answer-display" style="display:none;">
                 <div class="card-header">
                     <span class="card-icon">📖</span>
                     <span>标准答案</span>
-                    <span class="api-source" id="api-source"></span>
                 </div>
                 <div class="card-body" id="standard-answer-text"></div>
             </div>
 
-            <!-- 结果列表 -->
-            <div class="result-list" id="result-list">
-                <!-- 动态生成结果项 -->
+            <!-- 结果筛选 -->
+            <div class="result-toolbar" id="result-toolbar">
+                <div class="filter-chips" id="filter-chips">
+                    <button class="filter-chip active" data-level="all">全部</button>
+                    <button class="filter-chip" data-level="high">高风险</button>
+                    <button class="filter-chip" data-level="medium">中风险</button>
+                    <button class="filter-chip" data-level="low">低风险</button>
+                    <button class="filter-chip" data-level="safe">安全</button>
+                </div>
+                <input type="search" id="result-search" class="result-search" placeholder="搜索学生姓名…">
             </div>
+
+            <!-- 相似度矩阵（互查模式） -->
+            <div class="panel-section" id="matrix-section" style="display:none;">
+                <div class="section-head">
+                    <h3>相似度矩阵</h3>
+                    <span class="section-hint">颜色越深越相似，点击格子可跳到对应的比对明细</span>
+                </div>
+                <div class="matrix-legend">
+                    <span>低</span>
+                    <span class="matrix-legend-bar"></span>
+                    <span>高</span>
+                </div>
+                <div class="matrix-scroll">
+                    <div class="matrix-grid" id="matrix-grid"></div>
+                </div>
+            </div>
+
+            <!-- 疑似团伙（互查模式） -->
+            <div class="panel-section" id="group-section" style="display:none;">
+                <div class="section-head">
+                    <h3>疑似抄袭团伙</h3>
+                    <span class="section-hint">按「最不像的一对」排序，越靠前越可信</span>
+                </div>
+                <div id="group-list"></div>
+            </div>
+
+            <!-- 整卷汇总（整卷模式） -->
+            <div class="panel-section" id="rollup-section" style="display:none;">
+                <div class="section-head">
+                    <h3>整卷抄袭指数</h3>
+                    <span class="section-hint">按分值加权的各题平均相似度；优先列出雷同题目占分高的学生</span>
+                </div>
+                <div id="rollup-list"></div>
+            </div>
+
+            <!-- 逐题结果（整卷模式） -->
+            <div class="panel-section" id="per-question-section" style="display:none;">
+                <div class="section-head">
+                    <h3>逐题结果</h3>
+                    <span class="section-hint">点击题目展开每位学生的答案对照</span>
+                </div>
+                <div id="per-question-list"></div>
+            </div>
+
+            <!-- 结果列表 -->
+            <div class="result-list" id="result-list"></div>
 
             <!-- 操作按钮 -->
             <div class="result-actions">
                 <button class="btn btn-outline" id="btn-export">
                     <span class="btn-icon">📥</span>
                     导出报告
+                </button>
+                <button class="btn btn-outline" id="btn-export-csv">
+                    <span class="btn-icon">📊</span>
+                    导出 Excel(CSV)
                 </button>
                 <button class="btn btn-outline" id="btn-reset">
                     <span class="btn-icon">🔄</span>
@@ -281,41 +392,219 @@
             <div class="form-card">
                 <div class="form-header">
                     <h2>检测参数设置</h2>
-                    <p>自定义相似度计算的权重和阈值</p>
+                    <p>设置会保存到程序目录，重启后依然生效</p>
                 </div>
                 <div class="form-body">
                     <div class="settings-group">
-                        <h3 class="settings-title">权重配置</h3>
-                        <div class="setting-item">
-                            <label>精确匹配权重</label>
-                            <input type="range" class="range-input" id="weight-exact" min="0" max="100" value="40">
-                            <span class="range-value" id="weight-exact-val">0.40</span>
+                        <h3 class="settings-title">检测档位</h3>
+                        <div class="setting-item setting-item-stack">
+                            <label for="preset-select">按题目类型选择</label>
+                            <select class="preset-select" id="preset-select">
+                                <option value="short_answer">短答题 / 填空</option>
+                                <option value="long_text">长文本 / 作文</option>
+                                <option value="pairwise">学生互查</option>
+                                <option value="custom">自定义（手动调过权重）</option>
+                            </select>
                         </div>
-                        <div class="setting-item">
-                            <label>序列相似度权重</label>
-                            <input type="range" class="range-input" id="weight-sequence" min="0" max="100" value="35">
-                            <span class="range-value" id="weight-sequence-val">0.35</span>
+                        <div class="setting-note">
+                            选定档位后会按该类型的经验权重计算，不用自己配平；下面调整任一滑块即变为「自定义」。
                         </div>
-                        <div class="setting-item">
-                            <label>关键词重叠权重</label>
-                            <input type="range" class="range-input" id="weight-keyword" min="0" max="100" value="25">
-                            <span class="range-value" id="weight-keyword-val">0.25</span>
-                        </div>
-                        <div class="setting-note">提示：三项权重之和建议为 1.00</div>
                     </div>
+
                     <div class="settings-group">
-                        <h3 class="settings-title">阈值配置</h3>
+                        <h3 class="settings-title">常用权重</h3>
                         <div class="setting-item">
-                            <label>高风险阈值</label>
+                            <label for="weight-exact">精确匹配</label>
+                            <input type="range" class="range-input" id="weight-exact" min="0" max="100" value="20">
+                            <span class="range-value" id="weight-exact-val">0.20</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="weight-sequence">序列相似</label>
+                            <input type="range" class="range-input" id="weight-sequence" min="0" max="100" value="10">
+                            <span class="range-value" id="weight-sequence-val">0.10</span>
+                        </div>
+                        <div class="setting-item">
+                            <label for="weight-keyword">关键词</label>
+                            <input type="range" class="range-input" id="weight-keyword" min="0" max="100" value="15">
+                            <span class="range-value" id="weight-keyword-val">0.15</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3 class="settings-title">风险阈值</h3>
+                        <div class="setting-item">
+                            <label for="threshold-high">高风险阈值</label>
                             <input type="range" class="range-input" id="threshold-high" min="50" max="100" value="80">
                             <span class="range-value" id="threshold-high-val">80%</span>
                         </div>
                         <div class="setting-item">
-                            <label>中风险阈值</label>
+                            <label for="threshold-medium">中风险阈值</label>
                             <input type="range" class="range-input" id="threshold-medium" min="30" max="80" value="50">
                             <span class="range-value" id="threshold-medium-val">50%</span>
                         </div>
                     </div>
+
+                    <details class="advanced-settings" id="advanced-settings">
+                        <summary>高级设置（权重细分、小样本、片段、归一化）</summary>
+
+                        <div class="settings-group">
+                            <h3 class="settings-title">权重细分</h3>
+                            <div class="setting-item">
+                                <label for="weight-gram-jaccard">字形重合</label>
+                                <input type="range" class="range-input" id="weight-gram-jaccard" min="0" max="100" value="25">
+                                <span class="range-value" id="weight-gram-jaccard-val">0.25</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="weight-gram-cosine">字形分布</label>
+                                <input type="range" class="range-input" id="weight-gram-cosine" min="0" max="100" value="20">
+                                <span class="range-value" id="weight-gram-cosine-val">0.20</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="weight-coverage">内容覆盖</label>
+                                <input type="range" class="range-input" id="weight-coverage" min="0" max="100" value="10">
+                                <span class="range-value" id="weight-coverage-val">0.10</span>
+                            </div>
+                            <div class="setting-note">
+                                「内容覆盖」按较短一侧计算，用来抓「只抄了一半」的情况。
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3 class="settings-title">小样本校准</h3>
+                            <div class="setting-item setting-item-inline">
+                                <label for="calibration-enabled">启用校准</label>
+                                <input type="checkbox" id="calibration-enabled" class="checkbox-input" checked>
+                            </div>
+                            <div class="setting-item">
+                                <label for="calibration-low-len">短答案判定长度</label>
+                                <input type="range" class="range-input" id="calibration-low-len" min="1" max="60" value="12">
+                                <span class="range-value" id="calibration-low-len-val">12字</span>
+                            </div>
+                            <div class="setting-note">
+                                短于该长度的答案会按比例收缩，并不判高风险——避免「不会」两个字
+                                完全相同就被判抄袭。逐字照抄一份够长的答案仍是满分。
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3 class="settings-title">雷同片段</h3>
+                            <div class="setting-item">
+                                <label for="fragment-min-len">最短片段长度</label>
+                                <input type="range" class="range-input" id="fragment-min-len" min="4" max="30" value="8">
+                                <span class="range-value" id="fragment-min-len-val">8字</span>
+                            </div>
+                            <div class="setting-note">连续雷同达到该长度才作为证据高亮出来。</div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3 class="settings-title">文本归一化</h3>
+                            <div class="setting-item setting-item-inline">
+                                <label for="normalize-traditional">繁简统一</label>
+                                <input type="checkbox" id="normalize-traditional" class="checkbox-input">
+                            </div>
+                            <div class="setting-note">
+                                开启后繁体与简体按同一份文本比较；字表只覆盖常用字，属于部分覆盖。
+                                全角转半角、中英标点、数字单位归一始终开启。
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3 class="settings-title">互查聚类</h3>
+                            <div class="setting-item">
+                                <label for="cluster-margin">聚类敏感度</label>
+                                <input type="range" class="range-input" id="cluster-margin" min="0" max="50" value="15">
+                                <span class="range-value" id="cluster-margin-val">0.15</span>
+                            </div>
+                            <div class="setting-note">
+                                越大越不容易把学生连成团伙。全班普遍雷同的极端情况下，
+                                聚类只会圈出最像的几对。
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="settings-group">
+                        <h3 class="settings-title">大模型接口（可选）</h3>
+                        <p class="setting-note">
+                            只用于「生成参考答案」和「AIGC 二次判别」。不填也能用全部本地功能，
+                            程序不会自动发任何请求。密钥只保存在本机，界面与文件里都只看到脱敏形式。
+                        </p>
+                        <div class="setting-item setting-item-inline">
+                            <label for="llm-enabled">允许调用大模型</label>
+                            <input type="checkbox" id="llm-enabled" class="checkbox-input">
+                        </div>
+                        <div class="setting-item setting-item-stack">
+                            <label for="llm-base-url">接口地址（OpenAI 兼容，填到 /v1）</label>
+                            <input type="text" id="llm-base-url" class="form-input" placeholder="https://api.deepseek.com/v1">
+                        </div>
+                        <div class="setting-item setting-item-stack">
+                            <label for="llm-model">模型名称</label>
+                            <input type="text" id="llm-model" class="form-input" placeholder="例如 deepseek-chat">
+                        </div>
+                        <div class="setting-item setting-item-stack">
+                            <label for="llm-key">API 密钥（留空表示不修改）</label>
+                            <input type="password" id="llm-key" class="form-input" placeholder="sk-..." autocomplete="off">
+                        </div>
+                        <div class="setting-item setting-item-stack">
+                            <label for="llm-budget">每日预算上限（元，0 表示不限）</label>
+                            <input type="number" id="llm-budget" class="form-input" min="0" step="0.5" value="2">
+                        </div>
+                        <div class="helper-row">
+                            <div class="setting-item setting-item-stack">
+                                <label for="llm-price-in">输入单价（元/百万token）</label>
+                                <input type="number" id="llm-price-in" class="form-input" min="0" step="0.1" value="2">
+                            </div>
+                            <div class="setting-item setting-item-stack">
+                                <label for="llm-price-out">输出单价（元/百万token）</label>
+                                <input type="number" id="llm-price-out" class="form-input" min="0" step="0.1" value="8">
+                            </div>
+                        </div>
+                        <div class="llm-actions">
+                            <button class="btn btn-outline btn-sm" id="btn-llm-test">
+                                <span class="btn-icon">🔌</span> 测试连接
+                            </button>
+                            <button class="btn btn-outline btn-sm" id="btn-llm-cache">
+                                <span class="btn-icon">🧹</span> 清空结果缓存
+                            </button>
+                        </div>
+                        <div class="llm-status" id="llm-status">尚未配置接口。</div>
+                    </div>
+
+                    <details class="advanced-settings" id="aigc-settings">
+                        <summary>AIGC 线索参数（档位与灵敏度）</summary>
+
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <label for="aigc-strong">「线索偏强」分界</label>
+                                <input type="range" class="range-input" id="aigc-strong" min="20" max="95" value="60">
+                                <span class="range-value" id="aigc-strong-val">60%</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="aigc-medium">「线索中等」分界</label>
+                                <input type="range" class="range-input" id="aigc-medium" min="10" max="90" value="40">
+                                <span class="range-value" id="aigc-medium-val">40%</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="aigc-min-chars">最短可检测字数</label>
+                                <input type="range" class="range-input" id="aigc-min-chars" min="20" max="300" value="60">
+                                <span class="range-value" id="aigc-min-chars-val">60字</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="aigc-external-weight">外部判别在融合分中的占比</label>
+                                <input type="range" class="range-input" id="aigc-external-weight" min="0" max="60" value="40">
+                                <span class="range-value" id="aigc-external-weight-val">40%</span>
+                            </div>
+                            <div class="setting-item">
+                                <label for="aigc-evidence-max">最多圈出几句证据</label>
+                                <input type="range" class="range-input" id="aigc-evidence-max" min="1" max="20" value="6">
+                                <span class="range-value" id="aigc-evidence-max-val">6句</span>
+                            </div>
+                            <div class="setting-note">
+                                分界调低会让更多信息进入「中等」，但误伤套模板学生的概率同时上升。
+                                本工具的默认档位是按中学作文实测定的。
+                            </div>
+                        </div>
+                    </details>
+
                     <button class="btn btn-primary btn-block" id="btn-save-settings">
                         <span class="btn-icon">💾</span> 保存设置
                     </button>
@@ -337,7 +626,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <h3>批量导入学生答案</h3>
-                <button class="modal-close" id="batch-modal-close">&times;</button>
+                <button class="modal-close" id="batch-modal-close" aria-label="关闭">&times;</button>
             </div>
             <div class="modal-body">
                 <p class="modal-hint">每行一份答案，格式：<code>姓名,答案内容</code>（没有姓名则自动编号）</p>

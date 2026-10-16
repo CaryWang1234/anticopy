@@ -1,0 +1,24 @@
+# 密钥与本地状态：绝对不能入库
+# API 密钥单独存 secrets.json，设置接口只回「是否已配置」
+secrets.json
+settings.json
+llm_cache.json
+llm_usage.json
+*.tmp
+
+# 运行时数据与日志（含学生作答内容，不属于源码）
+detection_history.json
+plagiarism_alerts.log
+uploads/
+
+# 构建产物
+__pycache__/
+build/
+dist/
+*.egg-info/
+
+# 编辑器与系统杂物
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
