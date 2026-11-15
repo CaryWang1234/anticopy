@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AntiCopy · 作业比对工具</title>
-<meta name="description" content="本地运行的作业比对工具：六维字符比对定位雷同片段，学生互查与整卷按分值汇总，AIGC 只给风格线索。学生答案不出本机。">
+<meta name="description" content="本地运行的作业比对工具：比对答案、标出连续雷同的原文片段，支持学生互查和整卷按分值汇总。AIGC 只给风格线索，学生答案不出本机。">
 <meta name="theme-color" content="#ffffff">
 <meta property="og:title" content="AntiCopy · 作业比对工具">
-<meta property="og:description" content="先看证据，再找学生谈。六维比对定位雷同片段，全部在本机计算。">
+<meta property="og:description" content="先看证据，再找学生谈。雷同片段、分项指标和整卷汇总，都在本机算。">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ffffff'/%3E%3Cpath d='M16 6l8 3v7c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V9z' fill='none' stroke='%234a8f2a' stroke-width='2'/%3E%3C/svg%3E">
 <style>
@@ -392,8 +392,7 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
     <p class="eyebrow"><span class="dot"></span>本地运行 · 学生答案不出本机 · 四种检测模式</p>
     <h1>先看证据，<br>再找学生<em>谈</em>。</h1>
     <p class="lede">
-      两段答案像到什么程度、像在哪几个字上、整卷里哪几道题最可疑——
-      AntiCopy 把相似度拆成看得见的片段和指标，而不是给你一个没法解释的数字。
+      两段答案有多像、像在哪几个字，整卷哪几道题最可疑，都能看到对应的原文和分项分数，不用对着一串总分猜。
     </p>
     <div class="actions">
       <a class="btn primary" href="#run">怎么跑起来</a>
@@ -412,13 +411,13 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
       <span class="sec-num">01</span>
       <h2>四种模式</h2>
       <span class="grow"></span>
-      <p>标准答案不是必须的</p>
+      <p>没有标准答案也能查</p>
     </div>
     <div class="cards">
       <article class="card">
         <span class="card-tag">TEXT</span>
         <h3>文本比对</h3>
-        <p>标准答案对全班。六维指标加权，短答案自动收缩，不会因为「不会」两个字一样就判成抄袭。</p>
+        <p>标准答案对全班。六项指标加权，短答案自动收缩，不会因为「不会」两个字一样就判成抄袭。</p>
         <ul>
           <li>连续雷同片段定位到字符</li>
           <li>逐份给出六项分数</li>
@@ -427,25 +426,25 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
       <article class="card">
         <span class="card-tag">PAIRWISE</span>
         <h3>学生互查</h3>
-        <p>没有标准答案也能用。两两比对后，把互相高度相似的学生连成疑似团伙，直接告诉你该找谁。</p>
+        <p>没有标准答案也能用。两两比对，把互相高度相似的学生归成一组，先找谁、从哪对看起，都列出来。</p>
         <ul>
           <li>相似度矩阵，点格子看明细</li>
-          <li>团伙按「最不像的一对」排序</li>
+          <li>分组按「最不像的一对」排序</li>
         </ul>
       </article>
       <article class="card">
         <span class="card-tag">PAPER</span>
         <h3>整卷多题</h3>
-        <p>逐题比对，再按每题分值折算整卷。先看「几道题雷同、占多少分」，而不是被平均分稀释。</p>
+        <p>逐题比对，再按每题分值折算整卷。平均分容易把问题摊薄，这里先看有几道题雷同、占多少分。</p>
         <ul>
-          <li>缺答的题从分子分母同时剔除</li>
+          <li>没答的题不计入汇总</li>
           <li>指出最可疑的那道题</li>
         </ul>
       </article>
       <article class="card">
         <span class="card-tag">AIGC</span>
         <h3>AIGC 风格线索</h3>
-        <p>句长整齐度、套话密度、抽象大词、具体信息等六项可解释信号，圈出最可疑的句子。</p>
+        <p>句长整齐度、套话密度、抽象词、具体信息，六项信号分开算，再圈出最可疑的句子。</p>
         <ul>
           <li>只给线索，不给结论</li>
           <li>每项信号都附一句人话解释</li>
@@ -457,7 +456,7 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
   <section class="section wrap" id="evidence">
     <div class="sec-head">
       <span class="sec-num">02</span>
-      <h2>结果不是一句话</h2>
+      <h2>结果不只是一个分数</h2>
       <span class="grow"></span>
       <p>示意界面，示例文本为虚构</p>
     </div>
@@ -482,15 +481,15 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
           </div>
           <div class="verdict">
             <span class="score">0.86</span>
-            <span class="label">高风险 · 证据 1 处 · 答案长度足够，未做小样本收缩</span>
+            <span class="label">高风险 · 证据 1 处 · 答案长度足够，没触发小样本收缩</span>
           </div>
         </div>
       </div>
     </div>
     <ul class="evidence-points">
-      <li>雷同片段按原文下标回填，直接高亮在教师看到的文本上，不是另算一份摘要。</li>
-      <li>只有达到最小长度的连续块才算证据；标点、空格、全半角差异不影响判定。</li>
-      <li>每条结果同时保留原始分与校准后的分，教师能看出分数被动过手脚没有。</li>
+      <li>高亮直接落在原文上，教师看到的就是学生原话，不另做摘要。</li>
+      <li>连续雷同要达到最小长度才算证据；标点、空格、全半角不同不影响判断。</li>
+      <li>原始分和校准后的分都留着，分数有没有被调整过，一看就知道。</li>
     </ul>
   </section>
 
@@ -499,20 +498,20 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
       <span class="sec-num">03</span>
       <h2>这个工具不做什么</h2>
       <span class="grow"></span>
-      <p>比功能更需要说清楚</p>
+      <p>先把这些说在前面</p>
     </div>
     <div class="limits">
       <div class="limit">
         <h3>不给结论</h3>
-        <p>输出的是线索强度和可核对的证据。要不要认定为抄袭、怎么处理，是教师的事，工具不替人下判断。</p>
+        <p>输出的是线索强度和能逐条核对的证据。算不算抄袭、怎么处理，由教师决定，工具不替人下结论。</p>
       </div>
       <div class="limit">
         <h3>承认会误报</h3>
-        <p>AI 文本检测对认真套用作文模板的学生存在系统性误判。AIGC 结果只能用来决定先找谁聊，不能当作定性依据。</p>
+        <p>AI 文本检测容易冤枉认真套作文模板的学生。AIGC 结果只能用来决定先找谁聊，不能当作定性依据。</p>
       </div>
       <div class="limit">
         <h3>不偷偷联网</h3>
-        <p>所有比对在本机完成。需要外部接口的功能默认关闭，必须显式点击，且受每日预算上限约束。</p>
+        <p>所有比对都在本机完成。需要外部接口的功能默认关闭，要用得自己点开，还有每日预算上限。</p>
       </div>
     </div>
   </section>
@@ -541,7 +540,7 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
         <li>
           <div>
             <h3>也可以打包成 exe</h3>
-            <p>仓库内附 PyInstaller 配置，断网、不装 Python 的教室电脑也能用。</p>
+            <p>仓库里带了 PyInstaller 配置。教室电脑没装 Python、也断网，用 exe 照样跑。</p>
           </div>
         </li>
       </ol>
@@ -555,7 +554,7 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
 <span class="c"># 3. 命令行 / 自测</span>
 <span class="p">$</span> python main.py demo
 <span class="p">$</span> python selftest.py</pre>
-        <p class="run-foot">设置保存在程序目录，重启不丢；检测历史与导出的报告也都在本地。</p>
+        <p class="run-foot">设置存在程序目录，重启不丢；检测历史和导出的报告也都留在本地。</p>
       </div>
     </div>
   </section>
@@ -570,8 +569,8 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
     <ul class="ai-grid">
       <li><strong>生成参考答案：</strong>搜不到标准答案时，按题干生成一份供比对，教师确认后才填入。</li>
       <li><strong>AIGC 二次判别：</strong>只把最可疑的几句送去接口，姓名与长数字串先做替换。</li>
-      <li><strong>密钥不出本机：</strong>只存在本机 secrets.json，设置接口只返回脱敏后的形式。</li>
-      <li><strong>费用看得见：</strong>相同请求命中缓存不重复计费，当日花费达到预算即停止调用。</li>
+      <li><strong>密钥不出本机：</strong>只写在本机的 secrets.json 里，界面上只显示打码后的样子。</li>
+      <li><strong>费用看得见：</strong>重复请求命中缓存就不再计费，当天花到预算上限就停止调用。</li>
     </ul>
   </section>
 </main>
