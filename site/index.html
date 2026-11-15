@@ -5,24 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AntiCopy · 作业比对工具</title>
 <meta name="description" content="本地运行的作业比对工具：六维字符比对定位雷同片段，学生互查与整卷按分值汇总，AIGC 只给风格线索。学生答案不出本机。">
-<meta name="theme-color" content="#0a0b0c">
+<meta name="theme-color" content="#ffffff">
 <meta property="og:title" content="AntiCopy · 作业比对工具">
 <meta property="og:description" content="先看证据，再找学生谈。六维比对定位雷同片段，全部在本机计算。">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0b0c'/%3E%3Cpath d='M16 6l8 3v7c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V9z' fill='none' stroke='%23e6e8eb' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ffffff'/%3E%3Cpath d='M16 6l8 3v7c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V9z' fill='none' stroke='%234a8f2a' stroke-width='2'/%3E%3C/svg%3E">
 <style>
 :root {
-  --bg: #0a0b0c;
-  --bg-soft: #0f1113;
-  --panel: #121417;
-  --line: #22262b;
-  --line-soft: #1a1d21;
-  --text: #e6e8eb;
-  --text-mid: #a7aeb8;
-  --text-dim: #6e7783;
-  --accent: #d8a657;
-  --accent-dim: rgba(216, 166, 87, 0.12);
-  --ok: #7fa650;
+  --bg: #ffffff;
+  --bg-soft: #f6f8f3;
+  --panel: #ffffff;
+  --line: #dce3d5;
+  --line-soft: #e9eee4;
+  --line-strong: #c3cfb9;
+  --text: #171c13;
+  --text-mid: #4e5748;
+  --text-dim: #6b7564;
+  --accent: #4a8f2a;
+  --accent-strong: #3a7420;
+  --accent-dim: #edf5e5;
+  --accent-line: rgba(74, 143, 42, 0.34);
+  --ok: #4a8f2a;
   --mono: 'Cascadia Mono', Consolas, 'SF Mono', Menlo, monospace;
   --sans: 'Inter', 'Segoe UI', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --max: 1120px;
@@ -39,7 +42,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
-::selection { background: var(--accent); color: #14100a; }
+::selection { background: var(--accent); color: #ffffff; }
 
 .grid-bg {
   position: fixed;
@@ -47,7 +50,7 @@ a { color: inherit; text-decoration: none; }
   z-index: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(255,255,255,0.055) 1px, transparent 0);
+    radial-gradient(circle at 1px 1px, rgba(23,28,19,0.07) 1px, transparent 0);
   background-size: 28px 28px;
   mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.25) 55%, transparent);
   -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.25) 55%, transparent);
@@ -61,7 +64,7 @@ main, header, footer { position: relative; z-index: 1; }
   top: 0;
   z-index: 10;
   backdrop-filter: blur(10px);
-  background: rgba(10, 11, 12, 0.82);
+  background: rgba(255, 255, 255, 0.86);
 }
 .topbar .wrap {
   display: flex;
@@ -70,7 +73,7 @@ main, header, footer { position: relative; z-index: 1; }
   height: 60px;
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: 0.01em; }
-.brand svg { display: block; }
+.brand svg { display: block; color: var(--accent); }
 .brand small {
   font-family: var(--mono);
   font-size: 11px;
@@ -91,7 +94,7 @@ main, header, footer { position: relative; z-index: 1; }
   padding: 5px 12px;
   transition: border-color .18s, color .18s;
 }
-.gh:hover { color: var(--text); border-color: #3a4149; }
+.gh:hover { color: var(--text); border-color: var(--line-strong); }
 .hairline { height: 1px; background: var(--line-soft); }
 
 /* ---------- Hero ---------- */
@@ -109,7 +112,7 @@ main, header, footer { position: relative; z-index: 1; }
 .eyebrow .dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--ok);
-  box-shadow: 0 0 0 3px rgba(127,166,80,0.14);
+  box-shadow: 0 0 0 3px rgba(74,143,42,0.16);
 }
 .hero h1 {
   margin: 0;
@@ -120,10 +123,11 @@ main, header, footer { position: relative; z-index: 1; }
 }
 .hero h1 em { font-style: normal; color: var(--accent); }
 .lede {
-  max-width: 34em;
+  max-width: 37em;
   margin: 26px 0 0;
   color: var(--text-mid);
   font-size: clamp(15px, 1.6vw, 17px);
+  text-wrap: pretty;
 }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
 .btn {
@@ -138,9 +142,9 @@ main, header, footer { position: relative; z-index: 1; }
   color: var(--text);
   transition: background .18s, border-color .18s, transform .18s;
 }
-.btn:hover { border-color: #3a4149; background: #14171a; }
-.btn.primary { background: var(--text); color: #0a0b0c; border-color: var(--text); font-weight: 600; }
-.btn.primary:hover { background: #fff; transform: translateY(-1px); }
+.btn:hover { border-color: var(--line-strong); background: var(--bg-soft); }
+.btn.primary { background: var(--accent); color: #ffffff; border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); transform: translateY(-1px); }
 
 .specs {
   display: grid;
@@ -171,7 +175,7 @@ main, header, footer { position: relative; z-index: 1; }
 /* ---------- 通用 section ---------- */
 .section { padding: 78px 0; border-top: 1px solid var(--line-soft); }
 .sec-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 34px; }
-.sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent-strong); }
 .sec-head h2 {
   margin: 0;
   font-size: clamp(22px, 3vw, 30px);
@@ -185,13 +189,13 @@ main, header, footer { position: relative; z-index: 1; }
 .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .card {
   position: relative;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 42%), var(--bg-soft);
+  background: linear-gradient(180deg, rgba(74,143,42,0.055), transparent 45%), var(--panel);
   padding: 26px 26px 24px;
   transition: border-color .2s, transform .2s;
 }
-.card:hover { border-color: #31373e; transform: translateY(-2px); }
+.card:hover { border-color: var(--accent-line); transform: translateY(-2px); }
 .card-tag {
   font-family: var(--mono);
   font-size: 11px;
@@ -231,8 +235,8 @@ main, header, footer { position: relative; z-index: 1; }
 }
 .panel-head .chip {
   margin-left: auto;
-  color: var(--accent);
-  border: 1px solid rgba(216,166,87,0.35);
+  color: var(--accent-strong);
+  border: 1px solid var(--accent-line);
   background: var(--accent-dim);
   border-radius: 3px;
   padding: 1px 7px;
@@ -243,16 +247,16 @@ main, header, footer { position: relative; z-index: 1; }
 .answer + .answer { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line-soft); }
 .answer b { color: var(--text); font-weight: 500; font-size: 11px; font-family: var(--mono); display: block; margin-bottom: 4px; letter-spacing: 0.05em; }
 mark {
-  background: rgba(216,166,87,0.2);
-  color: #f2d9a8;
-  border-bottom: 1px solid rgba(216,166,87,0.55);
+  background: #e2f1d5;
+  color: #2f5a17;
+  border-bottom: 1px solid #8dbb6a;
   padding: 1px 1px;
 }
 .metrics { display: grid; gap: 13px; }
 .metric { display: grid; grid-template-columns: 76px 1fr 44px; align-items: center; gap: 10px; font-size: 12.5px; }
 .metric span:first-child { color: var(--text-mid); }
-.metric .bar { height: 4px; background: #1b1f24; border-radius: 999px; overflow: hidden; }
-.metric .bar i { display: block; height: 100%; background: #57606a; border-radius: 999px; }
+.metric .bar { height: 4px; background: #e8ede4; border-radius: 999px; overflow: hidden; }
+.metric .bar i { display: block; height: 100%; background: #6f9a55; border-radius: 999px; }
 .metric b { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); font-weight: 400; text-align: right; }
 .verdict {
   margin-top: 18px;
@@ -288,7 +292,7 @@ mark {
   content: counter(step, decimal-leading-zero);
   font-family: var(--mono);
   font-size: 12px;
-  color: var(--accent);
+  color: var(--accent-strong);
   padding-top: 2px;
 }
 .steps h3 { margin: 0 0 3px; font-size: 15px; font-weight: 650; }
@@ -297,7 +301,7 @@ pre {
   margin: 0;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
-  background: #0c0e10;
+  background: var(--bg-soft);
   padding: 18px 20px;
   overflow-x: auto;
   font-family: var(--mono);
@@ -305,9 +309,9 @@ pre {
   line-height: 1.9;
   color: var(--text-mid);
 }
-pre .c { color: #4f5862; }
-pre .p { color: var(--ok); }
-pre .s { color: var(--accent); }
+pre .c { color: var(--text-dim); }
+pre .p { color: var(--text-dim); }
+pre .s { color: var(--accent-strong); }
 .run-foot { margin: 16px 0 0; font-size: 12.5px; color: var(--text-dim); }
 
 /* ---------- 可选 AI ---------- */
@@ -366,7 +370,7 @@ footer { border-top: 1px solid var(--line-soft); padding: 30px 0 44px; }
   <div class="wrap">
     <a class="brand" href="#top">
       <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M16 5l9 3.4v7.4c0 5.4-3.7 9.3-9 11.2-5.3-1.9-9-5.8-9-11.2V8.4z" fill="none" stroke="#e6e8eb" stroke-width="2"/>
+        <path d="M16 5l9 3.4v7.4c0 5.4-3.7 9.3-9 11.2-5.3-1.9-9-5.8-9-11.2V8.4z" fill="none" stroke="currentColor" stroke-width="2"/>
       </svg>
       AntiCopy
       <small>v4.0</small>
